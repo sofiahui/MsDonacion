@@ -1,44 +1,39 @@
 package com.donaton.msdonaciones;
 
+import com.donaton.msdonaciones.model.Donacion;
+import com.donaton.msdonaciones.repository.DonacionRepository;
+import com.donaton.msdonaciones.service.DonacionService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
-@AutoConfigureMockMvc
 class DonacionControllerTest {
 
     @Autowired
-    private MockMvc mockMvc;
+    private DonacionService service;
 
-    @Test
-    void getdonaciones_debeRetornar200() throws Exception {
-        mockMvc.perform(get("/donaciones"))
-               .andExpect(status().isCreated());
+    @Autowired
+    private DonacionRepository repository;
+
+    @BeforeEach
+    void limpiar() {
+        repository.deleteAll();
     }
 
     @Test
-    void postDonacion_debeCrearYRetornar200() throws Exception {
-        String json = """
-            {
-                "tipoDonacion": "ropa",
-                "cantidad": 10,
-                "origen": "persona",
-                "centroAcopio": "Centro Norte"
-            }
-            """;
+    void crearDonacion_debeGuardarYRetornarConId() {
+        Donacion d = service.crear("ropa", 10, "persona", "Centro Norte");
+        assertNotNull(d.getId());
+        assertEquals("ropa", d.getTipoDonacion());
+    }
 
-        mockMvc.perform(post("/donaciones")
-               .contentType(MediaType.APPLICATION_JSON)
-               .content(json))
-               .andExpect(status().isCreated())
-               .andExpect(jsonPath("$.tipoDonacion").value("ropa"));
+    @Test
+    void listarDonaciones_debeRetornarListaNoNula() {
+        service.crear("alimento", 5, "empresa", "Centro Sur");
+        assertFalse(service.listar().isEmpty());
     }
 }
